@@ -68,7 +68,9 @@ export function reduceFacts(facts: SessionFacts, event: AgentEvent): SessionFact
   const f: SessionFacts = { ...facts };
   if (event.ts && !Number.isNaN(Date.parse(event.ts)))
     f.lastEventAt = laterTs(f.lastEventAt, event.ts);
-  if (event.kind === "tool_result" || event.kind === "tool_error") {
+  // "unknown" = a result whose tool_use we never saw (e.g. tailing resumed
+  // mid-session after a restart). It can't be attributed, so it can't count.
+  if ((event.kind === "tool_result" || event.kind === "tool_error") && event.tool !== "unknown") {
     const outcome = { tool: event.tool, ok: event.kind === "tool_result" };
     f.window = [...f.window, outcome].slice(-BLOCKER_WINDOW);
   }

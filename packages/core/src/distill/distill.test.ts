@@ -64,6 +64,12 @@ describe("distill: Tier 1 — intent", () => {
       expect(isSubstantive(cleanPrompt(p))).toBe(false);
     }
     expect(card([prompt("ok", 1), prompt("Yes, set it up for the whole repo", 2)]).intent).toBe("");
+    for (const p of [
+      "Go through src/auth and add rate limiting",
+      "Yes, and also add retries to the API client",
+    ]) {
+      expect(isSubstantive(cleanPrompt(p))).toBe(true);
+    }
   });
 
   it("strips injected blocks (<system-reminder>, <command-name>, pasted-content tags)", () => {
@@ -152,6 +158,7 @@ describe("distill: Tier 1 — tasks and files", () => {
     expect(toRepoRelative("/etc/hosts", "/repo", "/repo")).toBeUndefined();
     expect(toRepoRelative("/repo/../repo2/x", "/repo", "/repo")).toBeUndefined();
     expect(toRepoRelative("/repo", "/repo", "/repo")).toBeUndefined();
+    expect(toRepoRelative("/repo/..foo/x.ts", "/repo", "/repo")).toBe("..foo/x.ts");
     const c = card([edit("/etc/hosts", 1), edit("../outside.ts", 2), edit("/repo/in.ts", 3)]);
     expect(c.files.modified).toEqual(["in.ts"]);
   });
@@ -204,6 +211,19 @@ describe("distill: Tier 1 — status, blockers, git", () => {
     expect(statusFrom(f, now(299))).toBe("waiting_on_user");
     expect(statusFrom(f, now(300))).toBe("idle");
     expect(statusFrom(f, now(1800))).toBe("ended");
+    const longRun = facts([{ kind: "tool_use", tool: "Bash", id: "b", ts: at(0) }]);
+    expect(statusFrom(longRun, now(900))).toBe("active"); // pending tool call, e.g. a long build
+    expect(statusFrom(longRun, now(1800))).toBe("ended");
+  });
+
+  it("ignores results whose tool_use was never seen (resumed mid-session)", () => {
+    const orphan = (sec: number): AgentEvent => ({
+      kind: "tool_error",
+      tool: "unknown",
+      id: `o${sec}`,
+      ts: at(sec),
+    });
+    expect(card([orphan(1), orphan(2), orphan(3)]).blockers).toEqual([]);
   });
 
   it("adds a blocker after ≥3 errors from the same tool in the last 10 tool results", () => {
@@ -273,11 +293,7 @@ describe("distill: Tier 2 — optional Haiku summary", () => {
   it.todo("records meta.distillTier (2 on success, 1 on fallback)");
 });
 
-describe("distill: Budgeter", () => {
-  it.todo("always produces a card ≤ MAX_CARD_BYTES (property test)");
-  it.todo("drops content in order: notes → decisions → files.modified tail → done tasks → summary");
-  it.todo("appends a '+N more' marker when it truncates files.modified");
-});
+// Budgeter tests live in budget.test.ts.
 
 function fixtureUrl(name: string): URL {
   return new URL(`../../../../fixtures/transcripts/${name}`, import.meta.url);

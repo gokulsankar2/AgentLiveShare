@@ -192,6 +192,7 @@ export class ClaudeCodeAdapter implements TranscriptAdapter {
         if (!isRecord(block) || block.type !== "tool_result") continue;
         const id = str(block.tool_use_id) ?? "";
         const tool = this.toolNames.get(id) ?? "unknown";
+        this.toolNames.delete(id); // results arrive once; keeps the map bounded
         // Echo filter: als-mcp results only close the pending call; their
         // content (a teammate's card) never becomes an event.
         if (block.is_error === true && !isEchoTool(tool)) {

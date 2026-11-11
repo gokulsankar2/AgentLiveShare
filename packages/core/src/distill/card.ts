@@ -56,7 +56,7 @@ export function toRepoRelative(
 ): string | undefined {
   const abs = posix.isAbsolute(path) ? path : posix.resolve(cwd ?? repoRoot, path);
   const rel = posix.relative(repoRoot, posix.normalize(abs));
-  if (!rel || rel.startsWith("..") || posix.isAbsolute(rel)) return undefined;
+  if (!rel || rel === ".." || rel.startsWith("../") || posix.isAbsolute(rel)) return undefined;
   return rel;
 }
 
@@ -64,8 +64,9 @@ export function statusFrom(facts: SessionFacts, now: Date): AgentStatus {
   const last = facts.lastEventAt ? Date.parse(facts.lastEventAt) : Number.NaN;
   const age = Number.isNaN(last) ? Number.POSITIVE_INFINITY : now.getTime() - last;
   if (age >= ENDED_MS) return "ended";
-  if (age >= IDLE_MS) return "idle";
+  // A long build/test run writes nothing while its tool call is pending: still active.
   if (facts.pendingTools.length > 0) return "active";
+  if (age >= IDLE_MS) return "idle";
   if (facts.awaitingUser) return "waiting_on_user";
   return "active";
 }

@@ -59,11 +59,17 @@ export function cleanPrompt(text: string): string {
 
 const ACK_RE = /^(yes|ok|okay|continue|go|y)\b/i;
 export const MIN_INTENT_CHARS = 20;
+/** An ack prefix followed by at most this much text is still just an ack. */
+const ACK_TAIL_MAX = 30;
 
 /** Worth considering as intent: not an acknowledgement, not harness noise, long enough. */
 export function isSubstantive(cleaned: string): boolean {
   if (cleaned.length < MIN_INTENT_CHARS) return false;
-  if (ACK_RE.test(cleaned)) return false;
+  // "Yes, set it up" is an acknowledgement; "Go through src/auth and add rate
+  // limiting" is a request. Only reject an ack prefix with little after it.
+  if (ACK_RE.test(cleaned) && cleaned.replace(ACK_RE, "").trim().length <= ACK_TAIL_MAX) {
+    return false;
+  }
   return !HARNESS_TEXT.some((re) => re.test(cleaned));
 }
 
