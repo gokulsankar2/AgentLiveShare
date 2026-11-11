@@ -4,10 +4,12 @@
 // Exit 2 blocks the tool call and feeds stderr back to the agent.
 
 const OWNED = /packages\/core\/src\/(redact|distill|sync)\//;
-const ALLOWED = /(\.(test|spec)\.[cm]?[jt]sx?$)|(\/__tests__\/)|(\/__fixtures__\/)|(\/__snapshots__\/)/;
+const ALLOWED =
+  /(\.(test|spec)\.[cm]?[jt]sx?$)|(\/__tests__\/)|(\/__fixtures__\/)|(\/__snapshots__\/)/;
 // Shell writes: a redirect aimed at an owned path, or a file-mutating command mentioning one.
 const SHELL_REDIRECT = />>?\s*["']?[^\s"']*packages\/core\/src\/(redact|distill|sync)\//;
-const SHELL_MUTATE = /(\btee\b|\bsed\s+-i|\bperl\s+-[a-z]*i|\bmv\b|\bcp\b|\brm\b|\btouch\b|\bpatch\b|\bgit\s+(checkout|restore|apply)\b)/;
+const SHELL_MUTATE =
+  /(\btee\b|\bsed\s+-i|\bperl\s+-[a-z]*i|\bmv\b|\bcp\b|\brm\b|\btouch\b|\bpatch\b|\bgit\s+(checkout|restore|apply)\b)/;
 
 function block(reason) {
   process.stderr.write(

@@ -16,13 +16,13 @@ This is a learning project. The human author writes the core systems logic by ha
 
 In those directories the agent may:
 
-- Write and edit tests (`*.test.ts`, `*.spec.ts`) and fixtures, written *from the spec*, so they fail until the human implements the behavior.
+- Write and edit tests (`*.test.ts`, `*.spec.ts`) and fixtures, written _from the spec_, so they fail until the human implements the behavior.
 - Review code, explain concepts, point at the bug, sketch pseudocode in chat.
 - Create empty stub files with exported type signatures and `throw new Error("TODO")` bodies — only when asked.
 
 A PreToolUse hook (`.claude/hooks/guard-core.mjs`) blocks agent edits to non-test files in these directories. Don't work around it (no `Bash` writes, `sed`, or `cat >` into those paths). If you think you need an exception, stop and ask.
 
-**Agent-owned (normal pair programming):** scaffolding, build/test config, CI, `packages/extension`, `packages/mcp-server`, `packages/cli`, the GitHub transport's Octokit plumbing *outside* `core/src/sync`, fixtures, docs, and demo scripts.
+**Agent-owned (normal pair programming):** scaffolding, build/test config, CI, `packages/extension`, `packages/mcp-server`, `packages/cli`, the GitHub transport's Octokit plumbing _outside_ `core/src/sync`, fixtures, docs, and demo scripts.
 
 ## Stack & conventions
 
@@ -32,12 +32,14 @@ A PreToolUse hook (`.claude/hooks/guard-core.mjs`) blocks agent edits to non-tes
 
 ## Commands
 
-Fill these in once the monorepo is scaffolded:
+- Install: `pnpm install` (pnpm 12; `esbuild` is the only dependency allowed to run build scripts, via `allowBuilds` in `pnpm-workspace.yaml`)
+- Test: `pnpm test` (single package: `pnpm --filter @als/core test`; watch: `pnpm test:watch`)
+- Coverage: `pnpm coverage` (80% threshold on `packages/core/src/**` only)
+- Typecheck / build: `pnpm typecheck` (`tsc -b`; also emits `dist/`, which `@als/cli` imports `@als/core` from)
+- Lint: `pnpm lint` (Biome). Auto-fix: `pnpm format`. Never run `pnpm format` while the human has uncommitted work in the owned directories.
+- CLI (dev): `pnpm --filter @als/cli dev distill <file.jsonl>`
 
-- Install: `pnpm install`
-- Test: `pnpm test` (single package: `pnpm --filter @als/core test`)
-- Typecheck: `pnpm typecheck`
-- Lint/format: `pnpm lint`
+The `it.todo` entries in `packages/core/src/{redact,distill,sync}/*.test.ts` are the human's work queue. Don't delete or implement them; convert one to a real failing test only when asked.
 
 ## Workflow
 
