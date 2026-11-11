@@ -18,6 +18,11 @@ const INJECTED_BLOCKS = [
   "pasted-content",
   "user-memory-input",
   "task-notification",
+  // Desktop-app events delivered as user turns.
+  "side-sessions-event",
+  "cross-session-message",
+  "agent-message",
+  "ci-monitor-event",
 ];
 const INJECTED_RE = new RegExp(
   `<(${INJECTED_BLOCKS.join("|")})(?:\\s[^>]*)?>[\\s\\S]*?</\\1>`,

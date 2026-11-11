@@ -79,6 +79,11 @@ describe("distill: Tier 1 — intent", () => {
       '<pasted_content id="x">huge log</pasted_content><bash-input>ls</bash-input>';
     expect(cleanPrompt(raw)).toBe("Review the redaction module for bypasses");
     expect(cleanPrompt('Fix this <pasted_content id="1">unterminated')).toBe("Fix this");
+    expect(
+      cleanPrompt(
+        "<system-reminder>x</system-reminder>\n<side-sessions-event>None of the sessions is working</side-sessions-event>",
+      ),
+    ).toBe("");
   });
 
   it("takes the Task: section of a session hand-off preamble", () => {
