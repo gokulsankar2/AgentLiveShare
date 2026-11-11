@@ -106,6 +106,10 @@ fixtures/      anonymized transcripts, secret corpus (fake keys), golden outputs
 ```
 
 - **Size:** target ≤1024 bytes serialized, hard cap 1536. The Budgeter drops content in this order: `notes` → `decisions` → `files.modified` tail (adds `"+N more"`) → `tasks.done` → shortens `summary`.
+  - *Week 1:* the `files.modified` step keeps the 3 most recent files. A bare `"+N more"` tells a teammate nothing, and on real sessions it was being emptied while every pending task survived.
+  - If the card is still over target after the spec's steps, the Budgeter goes on to trim `files.inProgress`, the remaining tasks, `claims`, `blockers`, the rest of `files.modified`, `intent`, and `git.branch`, in that order. That guarantees the cap for any schema-valid card, which a fast-check property test checks.
+  - If even the minimal card is over the hard cap, it throws (fail closed).
+  - `"+N more"` is a marker entry, not a path: readers such as `check_conflicts` must skip it.
 - **No field holds raw tool output, code, or command text.** This data minimization is the strongest privacy control. Redaction is the backstop.
 - The schema lives in zod in `core/schema.ts`, with JSON Schema exported for docs.
 

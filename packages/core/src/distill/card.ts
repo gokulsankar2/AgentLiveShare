@@ -26,6 +26,8 @@ export interface CardContext {
    * never cut in half (and left unrecognizable) by a length cap.
    */
   scrub?: (text: string) => string;
+  /** Repo-relative paths for which this returns false are left out entirely (neverSyncPaths). */
+  keepPath?: (repoRelative: string) => boolean;
 }
 
 /** Marker entry appended when a file list is truncated: `+N more`. */
@@ -92,7 +94,7 @@ export function buildTier1Card(facts: SessionFacts, ctx: CardContext): AgentCard
   if (repoRoot) {
     for (const e of facts.edits) {
       const rel = toRepoRelative(e.path, repoRoot, e.cwd);
-      if (!rel) continue;
+      if (!rel || (ctx.keepPath && !ctx.keepPath(rel))) continue;
       const path = scrub(rel);
       if (path.length > 200) continue;
       modified.push(path);
