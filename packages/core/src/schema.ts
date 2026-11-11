@@ -23,10 +23,18 @@ export const Task = z.object({
   state: TaskState,
 });
 
-export const Claim = z.object({
-  glob: repoPath,
-  until: timestamp,
-});
+// `since` orders overlapping claims (earliest wins, then lexical agentId — §2.4);
+// `until` is when the claim expires.
+export const Claim = z
+  .object({
+    glob: repoPath,
+    since: timestamp,
+    until: timestamp,
+  })
+  .refine((c) => Date.parse(c.until) > Date.parse(c.since), {
+    message: "claim.until must be after claim.since",
+    path: ["until"],
+  });
 
 export const Note = z.object({
   to: z.union([z.literal("*"), z.string().regex(GITHUB_LOGIN)]),

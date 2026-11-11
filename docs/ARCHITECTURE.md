@@ -95,7 +95,9 @@ fixtures/      anonymized transcripts, secret corpus (fake keys), golden outputs
     "modified":   ["src/auth/refresh.ts", "src/auth/refresh.test.ts"],// ≤15, repo-relative
     "inProgress": ["src/auth/middleware.ts"]                          // edited in last 5 min
   },
-  "claims":    [{ "glob": "src/auth/**", "until": "2026-10-31T20:00:00Z" }], // advisory
+  "claims":    [{ "glob": "src/auth/**",                                // advisory, ≤5
+                  "since": "2026-10-31T19:00:00Z",                    // claim-conflict tie-break (§2.4)
+                  "until": "2026-10-31T20:00:00Z" }],                 // expiry; must be after since
   "decisions": ["Sliding expiry, not fixed window"],                  // ≤3, ≤120 chars
   "blockers":  [],
   "notes":     [{ "to": "*", "text": "Don't touch session.ts, refactoring", "at": "…" }], // ≤3

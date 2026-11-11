@@ -22,7 +22,7 @@ const exampleCard = (): AgentCard => ({
     modified: ["src/auth/refresh.ts", "src/auth/refresh.test.ts"],
     inProgress: ["src/auth/middleware.ts"],
   },
-  claims: [{ glob: "src/auth/**", until: "2026-10-31T20:00:00Z" }],
+  claims: [{ glob: "src/auth/**", since: "2026-10-31T19:00:00Z", until: "2026-10-31T20:00:00Z" }],
   decisions: ["Sliding expiry, not fixed window"],
   blockers: [],
   notes: [{ to: "*", text: "Don't touch session.ts, refactoring", at: "2026-10-31T19:00:00Z" }],
@@ -79,6 +79,20 @@ describe("AgentCard schema", () => {
   it("rejects a negative or fractional seq", () => {
     expect(AgentCard.safeParse({ ...exampleCard(), seq: -1 }).success).toBe(false);
     expect(AgentCard.safeParse({ ...exampleCard(), seq: 1.5 }).success).toBe(false);
+  });
+
+  it.each([
+    ["missing since", { glob: "src/**", until: "2026-10-31T20:00:00Z" }],
+    [
+      "until equal to since",
+      { glob: "src/**", since: "2026-10-31T20:00:00Z", until: "2026-10-31T20:00:00Z" },
+    ],
+    [
+      "until before since",
+      { glob: "src/**", since: "2026-10-31T20:00:00Z", until: "2026-10-31T19:00:00Z" },
+    ],
+  ])("rejects a claim with %s", (_label, claim) => {
+    expect(AgentCard.safeParse({ ...exampleCard(), claims: [claim] }).success).toBe(false);
   });
 
   it("rejects a timestamp that is not ISO-8601", () => {
