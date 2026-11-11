@@ -135,13 +135,26 @@ type AgentEvent =
   | { kind: "file_read"; path: string; ts }
   | { kind: "command"; cmd: string; ts }        // used for signals only, never synced
   | { kind: "todos"; items: {text,state}[]; ts }
-  | { kind: "tool_error"; tool: string; ts }
+  | { kind: "tool_use"; tool: string; id: string; ts }   // every call; drives `status`
+  | { kind: "tool_result"; tool: string; id: string; ts }
+  | { kind: "tool_error"; tool: string; id: string; ts }
+  | { kind: "session_meta"; sessionId; cwd?; gitBranch?; ts } // emitted when any of these change
   | { kind: "turn_end" | "compaction"; ts }
 ```
+
+`tool_use`/`tool_result` and `session_meta` were added in Week 1: the status heuristic needs "a tool call with no result yet", and the extractor needs `cwd`/`gitBranch` without reading raw lines. `user_prompt`/`assistant_text` also carry `sidechain: boolean`.
 
 **Parsing rules:**
 - Unknown `type` values are ignored, not thrown. The format is undocumented and will drift.
 - Pin golden tests to real transcripts.
+
+**Observed format (Week-1 spike, Claude Code 2.1.296–2.1.321, CLI and desktop app).** Only `user`, `assistant` and `system` entries matter. The rest are known and skipped: `attachment`, `queue-operation`, `last-prompt`, `custom-title`, `ai-title`, `agent-name`, `file-history-snapshot`/`-delta`, `atis-latch`, `api-request*`, `tools-used`, `mode`, `permission-mode`, `cost-state`, `relocated`, `session-owner`, `summary`. Anything else bumps the unknown-type counter.
+- An assistant message is split across several lines, one per content block (`thinking`, `text`, `tool_use`), each repeating `message.stop_reason`. **Turn end = `stop_reason: "end_turn"`** on a main-thread line.
+- `tool_result` blocks carry only `tool_use_id`, so the adapter keeps an id → tool-name map.
+- `user` lines that are *not* prompts: tool results, `isMeta: true` (skill/command expansions), `isCompactSummary`, `origin.kind: "task-notification"`, `turnOrigin: "auto_continuation"`, and `[Request interrupted by user]`.
+- Todo tools (tool-name map): `TodoWrite` (`todos[].content/status`) and the desktop app's `mcp__ccd_turn__update_plan` (full `items[]` or incremental `advance`/`done`/`start`). The CLI's newer `TaskCreate`/`TaskUpdate` tools weren't in any local transcript, so they aren't mapped yet.
+- Compaction: `system` with `subtype: "compact_boundary"` or a `user` line with `isCompactSummary`. Neither appeared locally; both are handled defensively.
+- No subagent (`isSidechain: true`) lines appeared inline in 2.1.3xx transcripts; the flag is still honored.
 
 ### 2.2 Context Distillation Engine
 

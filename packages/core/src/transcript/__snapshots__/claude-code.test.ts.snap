@@ -1,0 +1,17 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`golden: real and synthetic transcripts > real Claude Code 2.1.321 desktop transcript parses with no unknown types 1`] = `
+{
+  "assistant_text": 24,
+  "command": 50,
+  "file_edit": 37,
+  "file_read": 2,
+  "session_meta": 2,
+  "todos": 19,
+  "tool_error": 18,
+  "tool_result": 104,
+  "tool_use": 122,
+  "turn_end": 6,
+  "user_prompt": 8,
+}
+`;
