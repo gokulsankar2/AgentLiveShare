@@ -1,7 +1,7 @@
 import { describe, it } from "vitest";
 
 // Work queue for the distillation engine — docs/ARCHITECTURE.md §2.2.
-// Human-owned: turn each todo into a real test (fixtures in fixtures/transcripts/), then implement.
+// Backlog: turn each todo into a real test (fixtures in fixtures/transcripts/), then implement.
 
 describe("distill: Tier 1 — intent", () => {
   it.todo("uses the first substantive user prompt as intent");

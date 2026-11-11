@@ -2,27 +2,17 @@
 
 Real-time context sync for coding agents. Each developer's agent session is distilled into a ~1KB card, redacted, and pushed to an orphan `agent-sync` branch on the team's GitHub repo; teammates' agents read those cards through a local MCP server.
 
-**Source of truth:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Read the relevant section before planning or reviewing any change. If code and spec disagree, flag it — don't silently pick one. Spec changes go in the same PR as the code that needs them.
+**Source of truth:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Read the relevant section before planning or reviewing any change. If code and spec disagree, flag it — don't silently pick one. Spec changes go in the same commit/PR as the code that needs them.
 
-## Ownership rules (read this first)
+## How we work
 
-This is a learning project. The human author writes the core systems logic by hand; the agent is a pair programmer, test author, and reviewer for those parts.
+AI-first development: the agent writes most of the code — including the core redaction, distillation, and sync logic — and the human steers, reviews, and makes the design calls. Optimize for shipping working, tested slices quickly.
 
-**Human-owned — the agent must NOT write implementation code here:**
-
-- `packages/core/src/redact/` — secret & PII redaction engine (§2.3)
-- `packages/core/src/distill/` — Tier-1 extractor and Tier-2 distiller (§2.2)
-- `packages/core/src/sync/` — publisher, poller, merger, transports (§2.4)
-
-In those directories the agent may:
-
-- Write and edit tests (`*.test.ts`, `*.spec.ts`) and fixtures, written _from the spec_, so they fail until the human implements the behavior.
-- Review code, explain concepts, point at the bug, sketch pseudocode in chat.
-- Create empty stub files with exported type signatures and `throw new Error("TODO")` bodies — only when asked.
-
-A PreToolUse hook (`.claude/hooks/guard-core.mjs`) blocks agent edits to non-test files in these directories. Don't work around it (no `Bash` writes, `sed`, or `cat >` into those paths). If you think you need an exception, stop and ask.
-
-**Agent-owned (normal pair programming):** scaffolding, build/test config, CI, `packages/extension`, `packages/mcp-server`, `packages/cli`, the GitHub transport's Octokit plumbing _outside_ `core/src/sync`, fixtures, docs, and demo scripts.
+- Work in thin vertical slices that follow the 4-week plan in docs/ARCHITECTURE.md §3.
+- For each slice: short plan → tests from the spec → implementation → `pnpm lint && pnpm typecheck && pnpm test` green → review → commit.
+- Ask before big design changes or deviations from the spec; otherwise proceed without waiting for approval on routine steps.
+- The security-critical modules (`packages/core/src/redact/`, the egress gate, MCP output framing) get a security-focused review before they're committed.
+- Explain non-obvious design decisions briefly in the PR/commit message so the human can follow and talk about them.
 
 ## Stack & conventions
 
@@ -36,19 +26,15 @@ A PreToolUse hook (`.claude/hooks/guard-core.mjs`) blocks agent edits to non-tes
 - Test: `pnpm test` (single package: `pnpm --filter @als/core test`; watch: `pnpm test:watch`)
 - Coverage: `pnpm coverage` (80% threshold on `packages/core/src/**` only)
 - Typecheck / build: `pnpm typecheck` (`tsc -b`; also emits `dist/`, which `@als/cli` imports `@als/core` from)
-- Lint: `pnpm lint` (Biome). Auto-fix: `pnpm format`. Never run `pnpm format` while the human has uncommitted work in the owned directories.
+- Lint: `pnpm lint` (Biome). Auto-fix: `pnpm format`.
 - CLI (dev): `pnpm --filter @als/cli dev distill <file.jsonl>`
 
-The `it.todo` entries in `packages/core/src/{redact,distill,sync}/*.test.ts` are the human's work queue. Don't delete or implement them; convert one to a real failing test only when asked.
+The `it.todo` entries in `packages/core/src/{redact,distill,sync}/*.test.ts` are the backlog for those modules, written from the spec. Turn them into real tests as you implement each behavior.
 
-## Workflow
+## Git
 
-For each spec slice: plan → failing tests → (human) implement → review → coverage → commit.
-
-1. Plan one spec section at a time; wait for approval before writing files.
-2. For human-owned areas, write failing tests first and stop; report what fails and why.
-3. Review with a security lens on anything touching redaction, sync, MCP, or hooks.
-4. Commit with conventional commits (`feat(core): …`, `test(redact): …`). Commit or push only when asked.
+- Conventional commits (`feat(core): …`, `test(redact): …`, `fix(cli): …`).
+- Commit or push only when asked.
 
 ## Safety
 

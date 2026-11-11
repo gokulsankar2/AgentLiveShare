@@ -1,7 +1,7 @@
 import { describe, it } from "vitest";
 
 // Work queue for the sync layer — docs/ARCHITECTURE.md §2.4.
-// Human-owned: turn each todo into a real test using the in-memory transport
+// Backlog: turn each todo into a real test using the in-memory transport
 // and an injected clock, then implement.
 
 describe("sync: Publisher — when to push", () => {

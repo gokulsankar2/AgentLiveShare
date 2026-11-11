@@ -1,7 +1,7 @@
 import { describe, it } from "vitest";
 
 // Work queue for the redaction engine — docs/ARCHITECTURE.md §2.3.
-// Human-owned: turn each todo into a real test (fixtures in fixtures/secrets/), then implement.
+// Backlog: turn each todo into a real test (fixtures in fixtures/secrets/), then implement.
 
 describe("redact: layer 1 — known-format secrets", () => {
   it.todo("redacts AWS access key ids (AKIA…) as [REDACTED:aws_access_key]");
