@@ -347,6 +347,14 @@ Log these as metrics.
 **Session identity:**
 - `claim_paths` and `post_note` must attach to the right local session. MVP rule: use the most recently written transcript in this repo's slug directory.
 - Week-1 spike: check whether Claude Code exposes the session id to MCP subprocesses (env var or hook payload). If it does, use it instead.
+- **Week-1 spike result (Claude Code 2.1.321, desktop app, 2026-11-11): yes, via env.**
+  - Method: started a throwaway `claude -p` with `--strict-mcp-config` pointing at a stdio "MCP server" that only dumps its environment.
+  - Finding: the server process gets **`CLAUDE_CODE_SESSION_ID`** set to the new session's id, which matches the transcript filename `<sessionId>.jsonl`. It also gets **`CLAUDE_PROJECT_DIR`** (the session's project dir, which gives the slug directory).
+  - The parent session's id was *not* inherited: the child reported its own id. `CLAUDE_PID` was inherited, so not every variable is per-session.
+  - Hooks receive `session_id` and `transcript_path` in their stdin JSON (documented), so the week-4 `als check`/`als status` hooks don't need a heuristic.
+  - **Rule:** `als-mcp` uses `CLAUDE_CODE_SESSION_ID` when it's set and a matching `<id>.jsonl` exists in the repo's slug directory. Otherwise it falls back to the MVP rule above.
+  - Caveat: the MCP process is spawned once per session. If Claude Code ever switches session ids under a live server (`/clear`, resume), the env var goes stale. Verify the transcript file still exists and fall back when it doesn't.
+  - Unverified: the plain CLI (`claude` in a terminal) and older versions.
 
 **Making it "live"** without relying on the agent to remember (week 4), via Claude Code hooks in `.claude/settings.json`:
 - `SessionStart` → `als status --brief` injects the team summary

@@ -27,7 +27,7 @@ AI-first development: the agent writes most of the code — including the core r
 - Coverage: `pnpm coverage` (80% threshold on `packages/core/src/**` only)
 - Typecheck / build: `pnpm typecheck` (`tsc -b`; also emits `dist/`, which `@als/cli` imports `@als/core` from)
 - Lint: `pnpm lint` (Biome). Auto-fix: `pnpm format`.
-- CLI (dev): `pnpm --filter @als/cli dev distill <file.jsonl>`
+- CLI (dev): `pnpm typecheck && pnpm --filter @als/cli dev distill <file.jsonl> [--login <gh-login>] [--json]` (dev imports `@als/core` from `dist/`)
 
 The `it.todo` entries in `packages/core/src/{redact,distill,sync}/*.test.ts` are the backlog for those modules, written from the spec. Turn them into real tests as you implement each behavior.
 
