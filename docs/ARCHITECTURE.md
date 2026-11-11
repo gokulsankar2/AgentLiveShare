@@ -232,6 +232,27 @@ It runs twice: before Tier 2 (so nothing sensitive goes into the LLM prompt or c
    - IPv4 outside private ranges
 5. **Team config** (`.agents/config.json` on the sync branch): `extraPatterns[]`, `allowlist[]`, and `neverSyncPaths[]` globs (e.g. `.env*`, `secrets/**`). Files matching those globs are dropped from `files.*` entirely.
 
+**Week-1 implementation notes** (`packages/core/src/redact/`; reviewed by `ecc:security-reviewer` twice and `ecc:code-reviewer` once before commit):
+- *Layer 1 additions:* AWS `ASIA…` temporary keys, GitLab `glpat-`, npm `npm_`, Slack webhook URLs, and `Basic <base64>` auth. An unterminated PEM block (a truncated paste) is redacted to the end of the text. Prefix lookbehinds exclude only letters and digits, so `GITHUB_TOKEN_ghp_…` still matches. OpenAI `sk-…` requires a digit, so kebab-case identifiers don't match. URL credentials end at the last `@` before a host, so a password containing `@` is removed whole.
+- *Layer 2:*
+  - Matches camelCase keys (`clientSecret`) and JSON form (`"apiKey": "…"`).
+  - Quoted values are taken up to the closing quote, spaces included (≥4 chars). Bare values need ≥8.
+  - Skipped: obvious non-secrets (`required`, `undefined`, …), bare values that read as code (multi-word camelCase/snake_case identifiers, `process.env.X`) unless they start with a known secret prefix (`sk_`, `ghp_`, …), and `author`.
+  - Only a complete `[REDACTED:<rule>]` tag vetoes a hit.
+- *Layer 3:*
+  - `=` counts only as trailing padding.
+  - Identifiers are recognised by character-class transition rate (≤0.3 per char). Random base64 sits around 0.4.
+  - Paths are suppressed only when followed by a *known* extension.
+  - `sha256:`/`md5:`-prefixed hashes are benign.
+  - A 40-char base64 token next to an `aws` keyword is an AWS secret key whatever its entropy.
+- *Layer 4:* dotted versions after `v`/`version` aren't IPs. Home-path rewrites count toward `meta.redactions`. Invisible format characters (`\p{Cf}`, e.g. zero-width spaces) are stripped first so they can't split a secret.
+- *Layer 5:*
+  - `allowlist` entries must be ≥8 chars with no whitespace, and they only protect whole tokens. Allowlisting `ghp_` can't disable the GitHub rule.
+  - `neverSyncPaths` globs match case-insensitively, treat `\` as `/`, and also match directory prefixes (`secrets` covers `secrets/prod/db.txt`). `.env`, `.env.*`, `*.pem`, `*.key`, `id_rsa*` and `id_ed25519*` are never synced, whatever the team config says.
+  - **`extraPatterns` are a safe regex subset in week 1:** ≤200 chars, no groups or lookarounds, no backreferences, at most one repeating quantifier, and they must not match `""`. That keeps matching at O(n²) at worst. They only run on inputs ≤4 KB. Anything longer skips them, and the egress gate (which scans short card strings) blocks instead of leaking. A pattern outside the subset fails closed. JS regexes have no timeout, and the security review broke two shape-check heuristics. Full regexes wait for RE2 or a worker with a timeout (week 4).
+- *Egress gate:* parses the payload and scans every decoded string and key on its own. Scanning the raw JSON would let escapes (`\n`, `\"`) glue a letter onto a secret, and would let one field act as context for another (`"branch":"feat/auth","head":"<sha>"`). Any hit blocks, PII included, since pass 1 should already have removed it. So do a payload that isn't JSON, a bad team pattern, and any thrown error.
+- *Known gaps (week 4):* random hex keys ≤40 chars with no nearby keyword look like git SHAs and aren't flagged. So do bare AWS secret keys with no `aws` keyword nearby. Passwords under 8 chars in unquoted assignments, a password written as a camelCase phrase after a keyword, and `user:pa/ss@host` URLs (a `/` in the password) are missed.
+
 **Quality bar:**
 - `fixtures/secrets/` holds a positive corpus (canonical fake keys like `AKIAIOSFODNN7EXAMPLE`) and a negative corpus (SHAs, UUIDs, lockfile hashes, minified identifiers).
 - CI target: 100% recall on known formats, and a false-positive rate under 1% on real redacted transcripts.
