@@ -166,10 +166,17 @@ type AgentEvent =
 | `tasks` | Latest todo-tool input (`TodoWrite` / plan tool, via a tool-name map). This gives pending tasks almost for free. |
 | `files.modified` | `file_path` from `Edit`, `Write`, `MultiEdit`, `NotebookEdit`. Made repo-relative; anything outside the repo is dropped. Ordered by recency. |
 | `files.inProgress` | Subset edited in the last 5 min. |
-| `status` | Last event is `tool_use` with no result → `active`. `turn_end` with no newer user prompt → `waiting_on_user`. No writes for 5 min → `idle`. No writes for 30 min → `ended`. |
-| `blockers` | ≥3 `tool_error`s on the same tool in the last 10 events → `"Repeated <tool> failures"`. |
+| `status` | Checked in this order: no writes for 30 min → `ended`; no writes for 5 min → `idle`; a `tool_use` with no result → `active`; `turn_end` with no newer user prompt → `waiting_on_user`; otherwise `active`. |
+| `blockers` | ≥3 `tool_error`s on the same tool in the last 10 tool results → `"Repeated <tool> failures"`. (Counted over tool results, not all events: each call now emits `tool_use` + result, which would make "last 10 events" only ~3 calls.) |
+| `summary` | Tier 1 has no prose source that's safe to sync, so it writes counts only: `"<done>/<total> tasks done, <n> files modified."`. Tier 2 replaces it. |
 | `git` | `gitBranch` from transcript lines. HEAD comes from `git rev-parse` run by the daemon. |
 
+- **Intent details (Week 1):**
+  - Injected blocks are removed with their content: `system-reminder`, `command-name`/`command-message`, `local-command-*`, `bash-input`/`bash-stdout`/`bash-stderr`, pasted content, `task-notification`. An injected tag that never closes (truncated paste) drops everything after it. `<command-args>` keeps its text, since that's what the user typed.
+  - Host-written turns ("The app was quit while you were working…", interrupts) are never intent. A hand-off prompt that starts with "Background (from the session that started this one):" uses its `Task:` section.
+  - "First sentence" skips markdown headings and label lines ending in `:`.
+  - **New topic:** the prompt has ≥6 content words (≥4 chars, not stopwords) and <15% of them appear in the topic vocabulary (intent prompt, follow-up prompts on that topic, edited path segments).
+- **Redact before truncating.** Every free-text value goes through the redactor at full length, then gets cut to its cap. A length cap applied first could cut a secret in half and leave a fragment no rule recognizes.
 - **Echo filter:** drop `tool_result`s from `als-mcp` tools. Otherwise your agent reads a teammate's card and your distiller republishes it as your own state.
 - Also ignore `isSidechain` lines (subagents) for `intent`, but keep their file edits.
 

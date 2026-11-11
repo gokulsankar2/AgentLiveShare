@@ -1,0 +1,44 @@
+{
+  "v": 1,
+  "agentId": "dev--c0ffee00",
+  "owner": {
+    "login": "dev"
+  },
+  "tool": "claude-code",
+  "seq": 0,
+  "updatedAt": "2026-11-11T10:07:17.000Z",
+  "status": "waiting_on_user",
+  "git": {
+    "branch": "feat/refresh-tokens",
+    "head": "abc1234"
+  },
+  "intent": "Add refresh-token rotation to the auth middleware.",
+  "summary": "1/3 tasks done, 3 files modified.",
+  "tasks": [
+    {
+      "text": "Write rotation logic",
+      "state": "done"
+    },
+    {
+      "text": "Fix clock-skew tests",
+      "state": "in_progress"
+    },
+    {
+      "text": "Update API docs",
+      "state": "pending"
+    }
+  ],
+  "files": {
+    "modified": ["src/auth/middleware.ts", "src/auth/refresh.test.ts", "src/auth/refresh.ts"],
+    "inProgress": ["src/auth/middleware.ts"]
+  },
+  "claims": [],
+  "decisions": [],
+  "blockers": ["Repeated Bash failures"],
+  "notes": [],
+  "meta": {
+    "distillTier": 1,
+    "redactions": 0,
+    "engine": "0.1.0"
+  }
+}

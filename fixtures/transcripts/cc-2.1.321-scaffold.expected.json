@@ -1,0 +1,68 @@
+{
+  "v": 1,
+  "agentId": "dev--5ca1ab1e",
+  "owner": {
+    "login": "dev"
+  },
+  "tool": "claude-code",
+  "seq": 0,
+  "updatedAt": "2026-11-11T20:38:18.436Z",
+  "status": "active",
+  "git": {
+    "branch": "main",
+    "head": "abc1234"
+  },
+  "intent": "Write this current plan spec into the repo as docs/ARCHITECTURE.md.",
+  "summary": "4/5 tasks done, 15 files modified.",
+  "tasks": [
+    {
+      "text": "Add claim since field to spec, schema, tests",
+      "state": "done"
+    },
+    {
+      "text": "Verify ECC project-scope move and guard hook",
+      "state": "done"
+    },
+    {
+      "text": "Run lint, typecheck, tests",
+      "state": "done"
+    },
+    {
+      "text": "Commit ECC enable and scaffold separately",
+      "state": "done"
+    },
+    {
+      "text": "Add origin remote and push main",
+      "state": "in_progress"
+    }
+  ],
+  "files": {
+    "modified": [
+      "docs/ARCHITECTURE.md",
+      "packages/core/src/schema.test.ts",
+      "packages/core/src/schema.ts",
+      "CLAUDE.md",
+      ".github/workflows/ci.yml",
+      "fixtures/transcripts/README.md",
+      "fixtures/secrets/README.md",
+      "packages/cli/src/index.ts",
+      "packages/core/src/sync/sync.test.ts",
+      "packages/core/src/distill/distill.test.ts",
+      "packages/core/src/redact/redact.test.ts",
+      "packages/core/src/index.ts",
+      ".claude/hooks/guard-core.mjs",
+      ".claude/settings.json",
+      ".gitignore"
+    ],
+    "inProgress": []
+  },
+  "claims": [],
+  "decisions": [],
+  "blockers": [],
+  "notes": [],
+  "meta": {
+    "distillTier": 1,
+    "redactions": 0,
+    "engine": "0.1.0"
+  }
+}
