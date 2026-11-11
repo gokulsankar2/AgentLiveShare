@@ -1,0 +1,16 @@
+node_modules/
+dist/
+out/
+coverage/
+*.tsbuildinfo
+*.vsix
+.vscode-test/
+
+# Secrets and local config
+.env
+.env.*
+!.env.example
+.claude/settings.local.json
+
+# OS / editor
+.DS_Store
