@@ -1,28 +1,32 @@
 #!/usr/bin/env node
 import { MAX_CARD_BYTES } from "@als/core";
+import { DISTILL_USAGE, distillCommand } from "./distill.js";
 
 const USAGE = `Usage: als <command> [args]
 
 Commands:
   distill <transcript.jsonl>   Print the redacted card for a Claude Code transcript (≤${MAX_CARD_BYTES} bytes)
   check <path>                 Warn if a teammate's agent is editing or has claimed <path>
+
+Run "als distill --help" for distill options.
 `;
 
-function notImplemented(command: string): number {
-  process.stderr.write(`als ${command}: not implemented yet\n`);
-  return 1;
-}
-
-function main(argv: string[]): number {
-  const [command, arg] = argv;
+async function main(argv: string[]): Promise<number> {
+  const [command, ...rest] = argv;
   switch (command) {
     case "distill":
+      if (rest.includes("-h") || rest.includes("--help")) {
+        process.stdout.write(DISTILL_USAGE);
+        return 0;
+      }
+      return distillCommand(rest);
     case "check":
-      if (!arg) {
+      if (!rest[0]) {
         process.stderr.write(USAGE);
         return 2;
       }
-      return notImplemented(command);
+      process.stderr.write("als check: not implemented yet\n");
+      return 1;
     case undefined:
     case "-h":
     case "--help":
@@ -34,4 +38,4 @@ function main(argv: string[]): number {
   }
 }
 
-process.exitCode = main(process.argv.slice(2));
+process.exitCode = await main(process.argv.slice(2));
